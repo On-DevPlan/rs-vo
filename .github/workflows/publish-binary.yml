@@ -32,6 +32,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: rs-vo-win32-x64
+          # workflow_run 上下文默认指向 publish-binary 自己的 run,
+          # 但 artifact 是 build-rs-vo 上传的, 必须显式传触发它的 run-id.
+          run-id: ${{ github.event.workflow_run.id }}
           path: build-artifact
 
       - name: 准备子包目录

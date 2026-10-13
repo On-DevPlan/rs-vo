@@ -2,17 +2,17 @@
 
 Windows 会议录音 CLI · WASAPI shared mode + loopback · 不抢占系统设备
 
-**`npx rs-vo`** 一键启动，按 `y` 录音、`n` 结束、`q` 退出。
+**`npx @flowot/rs-vo`** 一键启动，按 `y` 录音、`n` 结束、`q` 退出。
 
 ## 安装 / 使用
 
 ```bash
 # 一次性试用 (推荐)
-npx rs-vo --list-devices     # 看设备能枚举出来
-npx rs-vo                    # 启动 CLI 面板
+npx @flowot/rs-vo --list-devices     # 看设备能枚举出来
+npx @flowot/rs-vo                    # 启动 CLI 面板
 
 # 全局安装
-npm install -g rs-vo
+npm install -g @flowot/rs-vo
 rs-vo
 ```
 
