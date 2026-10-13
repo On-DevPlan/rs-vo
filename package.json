@@ -1,6 +1,6 @@
 {
   "name": "@flowot/rs-vo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Windows 会议录音工具 (npx @flowot/rs-vo) — WASAPI shared mode + loopback, 不抢占系统设备",
   "bin": {
     "rs-vo": "./bin/rs-vo.js"
@@ -17,9 +17,6 @@
     "start": "node bin/rs-vo.js",
     "build": "cargo build --release",
     "list-devices": "node bin/rs-vo.js --list-devices"
-  },
-  "optionalDependencies": {
-    "@flowot/rs-vo-win32-x64": "0.1.0"
   },
   "engines": {
     "node": ">=18.0.0"
