@@ -23,6 +23,12 @@ jobs:
   publish-binary:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -82,12 +88,10 @@ jobs:
           else
             echo "published=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: 发布到 npm
         if: steps.npm_check.outputs.published == 'false'
         working-directory: binary-subpkg
         run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
