@@ -153,7 +153,7 @@ jobs:
 
             预编译的 Windows 录音二进制（无需用户安装 Rust）。
 
-            也可直接用 npm: `npx @flowot/rs-vo`
+            也可直接用 npm: `npx rsx-ro`
 
             | 资产 | 平台 | 说明 |
             | --- | --- | --- |

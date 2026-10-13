@@ -2,18 +2,18 @@
 
 Windows 会议录音 CLI · WASAPI shared mode + loopback · 不抢占系统设备
 
-**`npx @flowot/rs-vo`** 一键启动，按 `y` 录音、`n` 结束、`q` 退出。
+**`npx rsx-ro`** 一键启动，按 `y` 录音、`n` 结束、`q` 退出。
 
 ## 安装 / 使用
 
 ```bash
 # 一次性试用 (推荐)
-npx @flowot/rs-vo --list-devices     # 看设备能枚举出来
-npx @flowot/rs-vo                    # 启动 CLI 面板
+npx rsx-ro --list-devices     # 看设备能枚举出来
+npx rsx-ro                    # 启动 CLI 面板
 
 # 全局安装
-npm install -g @flowot/rs-vo
-rs-vo
+npm install -g rsx-ro
+rsx-ro
 ```
 
 只支持 Windows x64 (WASAPI)。其他平台会被 npm 拒绝安装 (`os: ["win32"]`)。
@@ -93,7 +93,7 @@ rs-vo.exe [OPTIONS]
 
 ## 验证清单
 
-1. 戴耳机放歌 → `npx rs-vo` → 按 `y` → 确认歌声没中断、耳机里依然听得到
+1. 戴耳机放歌 → `npx rsx-ro` → 按 `y` → 确认歌声没中断、耳机里依然听得到
 2. 开 Zoom 说话 → 按 `n` → 回放确认对方声音 + 你的声音都有
 3. 静默期 (对方闭嘴) → 回放无爆音、无断断续续
 
@@ -112,7 +112,7 @@ cargo build --release
 rs-vo/                        # 这个仓库
 ├── Cargo.toml                # Rust 包 (binary name = rs-vo)
 ├── src/                      # Rust 源代码
-├── package.json              # npm 包: @flowot/rs-vo
+├── package.json              # npm 包: rsx-ro
 ├── bin/rs-vo.js              # JS 入口: 找二进制, spawn
 ├── lib/platform.js           # 二进制路径解析
 ├── binaries/win32-x64/       # 随包分发的二进制
@@ -121,7 +121,7 @@ rs-vo/                        # 这个仓库
     └── fuck-npm.yml          # npm 包自动发布
 ```
 
-分发链路：`push main` → `build-rs-vo.yml` 编译并把 `binaries/win32-x64/rs-vo.exe` 提交回 repo → `fuck-npm.yml` 把整个包（JS + 二进制）发到 npm → 用户 `npx @flowot/rs-vo`。
+分发链路：`push main` → `build-rs-vo.yml` 编译并把 `binaries/win32-x64/rs-vo.exe` 提交回 repo → `fuck-npm.yml` 把整个包（JS + 二进制）发到 npm → 用户 `npx rsx-ro`。
 
 ## 许可
 

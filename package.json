@@ -1,8 +1,9 @@
 {
-  "name": "@flowot/rs-vo",
-  "version": "0.2.1",
-  "description": "Windows 会议录音工具 (npx @flowot/rs-vo) — WASAPI shared mode + loopback, 不抢占系统设备",
+  "name": "rsx-ro",
+  "version": "0.3.0",
+  "description": "Windows 会议录音工具 (npx rsx-ro) — WASAPI shared mode + loopback, 不抢占系统设备",
   "bin": {
+    "rsx-ro": "./bin/rs-vo.js",
     "rs-vo": "./bin/rs-vo.js"
   },
   "main": "lib/index.js",
