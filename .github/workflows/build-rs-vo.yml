@@ -92,13 +92,26 @@ jobs:
           sha256sum rs-vo.exe > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: 上传 artifact (给 publish-binary.yml)
+      - name: 提交产物回主分支
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add binaries/win32-x64/rs-vo.exe
+          if git diff --cached --quiet; then
+            echo "binary unchanged, no commit"
+          else
+            git commit -m "chore(binary): update rs-vo win32-x64 [skip ci]"
+            git push
+          fi
+
+      - name: 上传 artifact (给 Release)
         uses: actions/upload-artifact@v4
         with:
           name: rs-vo-win32-x64
-          path: |
-            binaries/win32-x64/
-            dist/
+          path: dist/
           if-no-files-found: error
 
   release:

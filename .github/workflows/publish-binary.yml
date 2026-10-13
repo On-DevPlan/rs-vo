@@ -3,17 +3,17 @@ name: Publish binary subpackage
 # 二进制子包 @flowot/rs-vo-win32-x64 自动发布.
 #
 # 触发方式:
-#   workflow_run: build-rs-vo.yml 在 main 分支成功后
+#   push to main (binaries/win32-x64/** 路径变更)
 #
-# 这样避免 push to main 时两个 workflow 并行竞争: 必须先有 build 产物才能发布.
-#
-# 子包版本与主 package.json 同步 (随主包一起 bump).
+# 不再用 workflow_run + artifact 下载那套 (在 Actions 里有权限/保留期坑),
+# 改成 build-rs-vo.yml 把二进制 commit 回 repo, 这里直接从 repo checkout 拿.
 
 on:
-  workflow_run:
-    workflows: [build-rs-vo]
-    types: [completed]
+  push:
     branches: [main]
+    paths:
+      - 'binaries/win32-x64/**'
+      - '.github/workflows/publish-binary.yml'
 
 permissions:
   contents: read
@@ -21,35 +21,31 @@ permissions:
 
 jobs:
   publish-binary:
-    # build 失败就不发子包; 也跳过 cancel / skipped 等非 success 状态.
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 下载 build 产物
-        uses: actions/download-artifact@v4
-        with:
-          name: rs-vo-win32-x64
-          # workflow_run 上下文默认指向 publish-binary 自己的 run,
-          # 但 artifact 是 build-rs-vo 上传的, 必须显式传触发它的 run-id.
-          run-id: ${{ github.event.workflow_run.id }}
-          path: build-artifact
-
-      - name: 准备子包目录
+      - name: 校验二进制存在
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p binary-subpkg/bin
-          cp build-artifact/binaries/win32-x64/rs-vo.exe binary-subpkg/bin/rs-vo.exe
-          ls -lh binary-subpkg/bin/
+          test -f binaries/win32-x64/rs-vo.exe || { echo "::error::binaries/win32-x64/rs-vo.exe 不存在"; exit 1; }
+          ls -lh binaries/win32-x64/rs-vo.exe
 
       - name: 读版本号
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 准备子包目录
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p binary-subpkg/bin
+          cp binaries/win32-x64/rs-vo.exe binary-subpkg/bin/rs-vo.exe
+          ls -lh binary-subpkg/bin/
 
       - name: 生成子包 package.json
         shell: bash
