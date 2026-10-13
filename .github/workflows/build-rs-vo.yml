@@ -1,14 +1,17 @@
 name: build-rs-vo
 
-# 编译 Windows x64 二进制.
+# 编译 Windows x64 二进制, 提交回仓库.
 #
 # 触发:
-#   * push to main (rust 源码或本文件变更)  → 构建 + 跑冒烟
-#   * PR                                   → 构建 + 跑冒烟 (不发布)
-#   * tag v*                                → 同上 + 创建 GitHub Release 上传产物
-#   * workflow_dispatch                     → 手动构建
+#   * push to main (rust 源码 / Cargo.toml / 本文件变更) → 构建 + 冒烟 + 提交二进制
+#   * PR                                                 → 只构建 + 冒烟
+#   * tag v*                                              → 同上 + 创建 GitHub Release
+#   * workflow_dispatch                                   → 手动
 #
-# 注意: rs-vo 仅支持 Windows x64 (WASAPI 共享模式), 不做多平台矩阵.
+# rs-vo 仅支持 Windows x64 (WASAPI 共享模式), 不做多平台矩阵.
+#
+# 发布链路: 本工作流提交二进制后, 由 fuck-npm.yml 通过 workflow_run 触发发布,
+# 保证 npm 上的包总是包含最新二进制 (顺序化, 无竞态).
 
 on:
   push:
@@ -61,15 +64,14 @@ jobs:
           echo "--- 产物 ---"
           ls -lh binaries/win32-x64 dist
 
-      - name: 冒烟测试 (--help)
+      - name: 冒烟测试 (--help / --version)
         shell: bash
         run: |
           set -euo pipefail
           ./dist/rs-vo.exe --help
-          echo "--- help 输出 OK ---"
+          ./dist/rs-vo.exe --version
 
-      # RS_VO_BINARY 指向本地构建, 验证 JS 入口能正确解析二进制.
-      # 这一步替代不了的, 是 mn-rt 生态里"二进制路径解析"逻辑在 CI 也能跑通.
+      # 验证 JS 入口能找到二进制并正确透传 (平台的解析逻辑在 CI 也能跑通).
       - name: 冒烟测试 (JS 入口找二进制)
         shell: bash
         run: |
@@ -92,7 +94,7 @@ jobs:
           sha256sum rs-vo.exe > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: 提交产物回主分支
+      - name: 提交二进制回主分支
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         shell: bash
         run: |
@@ -103,7 +105,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "binary unchanged, no commit"
           else
-            git commit -m "chore(binary): update rs-vo win32-x64 [skip ci]"
+            git commit -m "chore(binary): update rs-vo win32-x64"
             git push
           fi
 
@@ -134,14 +136,14 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p upload
-          cp release/dist/rs-vo.exe upload/rs-vo-win32-x64.exe
-          cp release/dist/SHA256SUMS.txt upload/
+          cp release/rs-vo.exe upload/rs-vo-win32-x64.exe
+          cp release/SHA256SUMS.txt upload/
           ( cd upload && sha256sum rs-vo-win32-x64.exe >> SHA256SUMS-all.txt )
           echo "--- 待上传 ---"
           ls -lh upload
           cat upload/SHA256SUMS-all.txt
 
-      - name: 创建 Release 并上传分平台产物
+      - name: 创建 Release 并上传产物
         uses: softprops/action-gh-release@v2
         with:
           files: upload/*
@@ -151,8 +153,10 @@ jobs:
 
             预编译的 Windows 录音二进制（无需用户安装 Rust）。
 
+            也可直接用 npm: `npx @flowot/rs-vo`
+
             | 资产 | 平台 | 说明 |
             | --- | --- | --- |
             | `rs-vo-win32-x64.exe` | Windows x64 | WASAPI 共享模式, 不抢占系统设备 |
 
-            `SHA256SUMS-all.txt` 含全部资产的校验和，可用于验证下载完整性。
+            `SHA256SUMS-all.txt` 含全部资产的校验和。

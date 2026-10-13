@@ -1,6 +1,6 @@
 [package]
 name = "rs-vo"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2021"
 description = "Windows 会议录音工具（CLI，WASAPI shared mode + loopback）"
 

@@ -1,16 +1,20 @@
 name: Publish to npm
 
-# 主 npm 包自动发布: push to main → 自动打 tag + npm publish (带 provenance).
+# npm 包自动发布.
 #
 # 触发方式:
-#   push to main
+#   workflow_run: build-rs-vo.yml 在 main 分支成功后
 #
-# 幂等性两层: git tag 已存在则跳过, npm 上已有该版本则跳过 publish.
+# 为什么不用 push 触发: build-rs-vo 会把编译好的二进制提交回仓库, 且 CI 用
+# GITHUB_TOKEN 推送不会触发下游 workflow. 用 workflow_run 保证「先有最新二进制,
+# 再发 npm」这个顺序, 避免 push 时两个 workflow 并行导致发出旧二进制.
 #
-# 用 `id-token: write` 让 `--provenance` 拿到 OIDC 签名身份 (公开仓库自动启用).
+# 幂等性两层: git tag 已存在则跳过; npm 上已有该版本则跳过 publish.
 
 on:
-  push:
+  workflow_run:
+    workflows: [build-rs-vo]
+    types: [completed]
     branches: [main]
 
 permissions:
@@ -20,11 +24,17 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # 必须 checkout 触发它的那个 run 的 commit (含刚提交回仓库的二进制),
+          # 而不是默认的当前 main HEAD.
+          ref: ${{ github.event.workflow_run.head_sha }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
@@ -32,6 +42,13 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: 校验二进制存在
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f binaries/win32-x64/rs-vo.exe || { echo "::error::binaries/win32-x64/rs-vo.exe 不存在"; exit 1; }
+          ls -lh binaries/win32-x64/rs-vo.exe
 
       - name: Get version
         id: version

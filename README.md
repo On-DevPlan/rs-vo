@@ -112,17 +112,16 @@ cargo build --release
 rs-vo/                        # 这个仓库
 ├── Cargo.toml                # Rust 包 (binary name = rs-vo)
 ├── src/                      # Rust 源代码
-├── package.json              # 主 npm 包: rs-vo
-├── bin/rs-vo.js               # JS 入口: 找二进制, spawn
+├── package.json              # npm 包: @flowot/rs-vo
+├── bin/rs-vo.js              # JS 入口: 找二进制, spawn
 ├── lib/platform.js           # 二进制路径解析
-├── binaries/win32-x64/       # 随仓库分发的二进制 (旧, 主要给源码 install)
+├── binaries/win32-x64/       # 随包分发的二进制
 └── .github/workflows/
-    ├── build-rs-vo.yml       # 编译 Rust, 上传 artifact, 打 tag 时建 Release
-    ├── fuck-npm.yml           # 主 npm 包自动发布
-    └── publish-binary.yml    # @flowot/rs-vo-win32-x64 自动发布
+    ├── build-rs-vo.yml       # 编译 Rust, 提交二进制回 repo, 打 tag 时建 Release
+    └── fuck-npm.yml          # npm 包自动发布
 ```
 
-二进制分发链路：`push main` → `build-rs-vo.yml` 构建 → `publish-binary.yml` (经 workflow_run 触发) 推 `@flowot/rs-vo-win32-x64` → 用户 `npx rs-vo` 拉到这个子包。
+分发链路：`push main` → `build-rs-vo.yml` 编译并把 `binaries/win32-x64/rs-vo.exe` 提交回 repo → `fuck-npm.yml` 把整个包（JS + 二进制）发到 npm → 用户 `npx @flowot/rs-vo`。
 
 ## 许可
 
