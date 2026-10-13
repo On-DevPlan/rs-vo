@@ -34,7 +34,7 @@ use ui::BannerInfo;
 static INTERRUPTED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Parser, Debug)]
-#[command(name = "win-recorder", version, about = "Windows 会议录音工具")]
+#[command(name = "rs-vo", version, about = "Windows 会议录音工具")]
 struct Args {
     /// 列出所有音频设备后退出
     #[arg(long)]

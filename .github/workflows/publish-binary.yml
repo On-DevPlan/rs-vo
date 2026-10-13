@@ -1,6 +1,6 @@
 name: Publish binary subpackage
 
-# 二进制子包 @ondevplann/rs-vo-win32-x64 自动发布.
+# 二进制子包 @flowot/rs-vo-win32-x64 自动发布.
 #
 # 触发方式:
 #   workflow_run: build-rs-vo.yml 在 main 分支成功后
@@ -66,7 +66,7 @@ jobs:
             },
             "repository": {
               "type": "git",
-              "url": "https://github.com/ZHLX2005/rs-vo.git"
+              "url": "https://github.com/On-DevPlan/rs-vo.git"
             }
           }
           EOF

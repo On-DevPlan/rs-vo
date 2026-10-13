@@ -100,7 +100,7 @@ rs-vo.exe [OPTIONS]
 ## 从源码构建
 
 ```bash
-git clone https://github.com/ZHLX2005/rs-vo.git
+git clone https://github.com/On-DevPlan/rs-vo.git
 cd rs-vo
 cargo build --release
 ./target/release/rs-vo.exe
@@ -119,10 +119,10 @@ rs-vo/                        # 这个仓库
 └── .github/workflows/
     ├── build-rs-vo.yml       # 编译 Rust, 上传 artifact, 打 tag 时建 Release
     ├── fuck-npm.yml           # 主 npm 包自动发布
-    └── publish-binary.yml    # @ondevplann/rs-vo-win32-x64 自动发布
+    └── publish-binary.yml    # @flowot/rs-vo-win32-x64 自动发布
 ```
 
-二进制分发链路：`push main` → `build-rs-vo.yml` 构建 → `publish-binary.yml` (经 workflow_run 触发) 推 `@ondevplann/rs-vo-win32-x64` → 用户 `npx rs-vo` 拉到这个子包。
+二进制分发链路：`push main` → `build-rs-vo.yml` 构建 → `publish-binary.yml` (经 workflow_run 触发) 推 `@flowot/rs-vo-win32-x64` → 用户 `npx rs-vo` 拉到这个子包。
 
 ## 许可
 
