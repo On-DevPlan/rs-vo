@@ -92,6 +92,8 @@ jobs:
       - name: 发布到 npm
         if: steps.npm_check.outputs.published == 'false'
         working-directory: binary-subpkg
-        run: npm publish --provenance --access public
+        # 临时去掉 --provenance 验证是 OIDC 还是别的原因.
+        # 真实原因查清楚后再恢复.
+        run: npm publish --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
