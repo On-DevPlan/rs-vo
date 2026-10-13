@@ -1,0 +1,94 @@
+name: Publish binary subpackage
+
+# 二进制子包 @ondevplann/rs-vo-win32-x64 自动发布.
+#
+# 触发方式:
+#   workflow_run: build-rs-vo.yml 在 main 分支成功后
+#
+# 这样避免 push to main 时两个 workflow 并行竞争: 必须先有 build 产物才能发布.
+#
+# 子包版本与主 package.json 同步 (随主包一起 bump).
+
+on:
+  workflow_run:
+    workflows: [build-rs-vo]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish-binary:
+    # build 失败就不发子包; 也跳过 cancel / skipped 等非 success 状态.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 下载 build 产物
+        uses: actions/download-artifact@v4
+        with:
+          name: rs-vo-win32-x64
+          path: build-artifact
+
+      - name: 准备子包目录
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p binary-subpkg/bin
+          cp build-artifact/binaries/win32-x64/rs-vo.exe binary-subpkg/bin/rs-vo.exe
+          ls -lh binary-subpkg/bin/
+
+      - name: 读版本号
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 生成子包 package.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > binary-subpkg/package.json <<EOF
+          {
+            "name": "@flowot/rs-vo-win32-x64",
+            "version": "${{ steps.version.outputs.version }}",
+            "description": "Pre-built rs-vo binary for Windows x64 (WASAPI shared mode + loopback)",
+            "license": "MIT",
+            "os": ["win32"],
+            "cpu": ["x64"],
+            "files": ["bin/"],
+            "bin": {
+              "rs-vo": "bin/rs-vo.exe"
+            },
+            "repository": {
+              "type": "git",
+              "url": "https://github.com/ZHLX2005/rs-vo.git"
+            }
+          }
+          EOF
+          echo "--- 子包 package.json ---"
+          cat binary-subpkg/package.json
+
+      - name: 检查子包版本是否已在 npm
+        id: npm_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm view "@flowot/rs-vo-win32-x64@${{ steps.version.outputs.version }}" version >/dev/null 2>&1; then
+            echo "published=true" >> $GITHUB_OUTPUT
+          else
+            echo "published=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: 发布到 npm
+        if: steps.npm_check.outputs.published == 'false'
+        working-directory: binary-subpkg
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

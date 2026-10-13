@@ -1,0 +1,48 @@
+{
+  "name": "rs-vo",
+  "version": "0.1.0",
+  "description": "Windows 会议录音工具 (npx rs-vo) — WASAPI shared mode + loopback, 不抢占系统设备",
+  "bin": {
+    "rs-vo": "./bin/rs-vo.js"
+  },
+  "main": "lib/index.js",
+  "type": "commonjs",
+  "files": [
+    "bin/",
+    "lib/",
+    "binaries/",
+    "README.md"
+  ],
+  "scripts": {
+    "start": "node bin/rs-vo.js",
+    "build": "cargo build --release",
+    "list-devices": "node bin/rs-vo.js --list-devices"
+  },
+  "optionalDependencies": {
+    "@flowot/rs-vo-win32-x64": "0.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "keywords": [
+    "voice",
+    "audio",
+    "recording",
+    "wasapi",
+    "windows",
+    "meeting",
+    "loopback"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZHLX2005/rs-vo.git"
+  },
+  "homepage": "https://github.com/ZHLX2005/rs-vo#readme"
+}

@@ -1,0 +1,145 @@
+name: build-rs-vo
+
+# 编译 Windows x64 二进制.
+#
+# 触发:
+#   * push to main (rust 源码或本文件变更)  → 构建 + 跑冒烟
+#   * PR                                   → 构建 + 跑冒烟 (不发布)
+#   * tag v*                                → 同上 + 创建 GitHub Release 上传产物
+#   * workflow_dispatch                     → 手动构建
+#
+# 注意: rs-vo 仅支持 Windows x64 (WASAPI 共享模式), 不做多平台矩阵.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - '.github/workflows/build-rs-vo.yml'
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - '.github/workflows/build-rs-vo.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: build win32-x64
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 安装 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: 缓存 cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: '. -> target'
+
+      - name: 编译 release
+        shell: bash
+        run: cargo build --release --locked
+
+      - name: 整理产物
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p binaries/win32-x64 dist
+          cp target/release/rs-vo.exe binaries/win32-x64/rs-vo.exe
+          cp target/release/rs-vo.exe dist/rs-vo.exe
+          echo "--- 产物 ---"
+          ls -lh binaries/win32-x64 dist
+
+      - name: 冒烟测试 (--help)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./dist/rs-vo.exe --help
+          echo "--- help 输出 OK ---"
+
+      # RS_VO_BINARY 指向本地构建, 验证 JS 入口能正确解析二进制.
+      # 这一步替代不了的, 是 mn-rt 生态里"二进制路径解析"逻辑在 CI 也能跑通.
+      - name: 冒烟测试 (JS 入口找二进制)
+        shell: bash
+        run: |
+          set -euo pipefail
+          RS_VO_BINARY="$(pwd)/dist/rs-vo.exe" node -e "
+            const p = require('./lib/platform').getBinaryPath();
+            const cp = require('child_process');
+            const out = cp.execSync('\"' + p + '\" --version', { encoding: 'utf8' });
+            console.log('binary path:', p);
+            console.log('version:', out.trim());
+            if (!out.includes('rs-vo')) throw new Error('binary not responsive');
+            console.log('JS platform resolver OK');
+          "
+
+      - name: 计算 SHA256
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          sha256sum rs-vo.exe > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: 上传 artifact (给 publish-binary.yml)
+        uses: actions/upload-artifact@v4
+        with:
+          name: rs-vo-win32-x64
+          path: |
+            binaries/win32-x64/
+            dist/
+          if-no-files-found: error
+
+  release:
+    # 仅打 tag 时汇总产物并创建 Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 下载产物
+        uses: actions/download-artifact@v4
+        with:
+          name: rs-vo-win32-x64
+          path: release
+
+      - name: 整理 Release 资产
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p upload
+          cp release/dist/rs-vo.exe upload/rs-vo-win32-x64.exe
+          cp release/dist/SHA256SUMS.txt upload/
+          ( cd upload && sha256sum rs-vo-win32-x64.exe >> SHA256SUMS-all.txt )
+          echo "--- 待上传 ---"
+          ls -lh upload
+          cat upload/SHA256SUMS-all.txt
+
+      - name: 创建 Release 并上传分平台产物
+        uses: softprops/action-gh-release@v2
+        with:
+          files: upload/*
+          generate_release_notes: true
+          body: |
+            ## rs-vo ${{ github.ref_name }}
+
+            预编译的 Windows 录音二进制（无需用户安装 Rust）。
+
+            | 资产 | 平台 | 说明 |
+            | --- | --- | --- |
+            | `rs-vo-win32-x64.exe` | Windows x64 | WASAPI 共享模式, 不抢占系统设备 |
+
+            `SHA256SUMS-all.txt` 含全部资产的校验和，可用于验证下载完整性。

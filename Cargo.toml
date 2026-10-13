@@ -1,0 +1,22 @@
+[package]
+name = "rs-vo"
+version = "0.1.0"
+edition = "2021"
+description = "Windows 会议录音工具（CLI，WASAPI shared mode + loopback）"
+
+[dependencies]
+wasapi = "0.20"
+hound = "3.5"
+anyhow = "1"
+crossterm = "0.28"
+clap = { version = "4", features = ["derive"] }
+chrono = "0.4"
+dirs = "5"
+ctrlc = "3"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = true
+codegen-units = 1
+panic = "abort"
